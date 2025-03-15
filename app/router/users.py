@@ -1,4 +1,4 @@
-from fastapi import status, HTTPException, APIRouter, Depends
+from fastapi import status, HTTPException, APIRouter
 from beanie import PydanticObjectId
 from models import User, UserResponse
 from typing import List
