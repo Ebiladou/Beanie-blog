@@ -1,17 +1,23 @@
 from datetime import datetime
 from beanie import Document
 from pydantic import BaseModel, Field, EmailStr
-from typing import Optional, List
+from typing import List
 
 class User(Document):
     username: str = Field(..., max_length=50)
     email: EmailStr
     password: str
-    bio: Optional[str] = None
+    bio: str | None = None
     created_at: datetime = Field(default_factory=datetime.now)
 
     class Settings:
         name = "users"
+
+class UserUpdate(BaseModel):
+    username: str | None = None
+    email: EmailStr | None = None
+    password: str | None = None
+    bio: str | None = None
 
 class UserResponse(BaseModel):
     username: str
@@ -24,14 +30,14 @@ class Comment(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
 
 class BlogPost(Document):
-    image_url: Optional[str] = None
+    image_url: str | None = None
     title: str = Field(..., max_length=100)
     content: str
     author: str 
     tags: List[str] = []
-    comments: List[Comment] = []
+    comments: List[Comment] = [] 
     created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: Optional[datetime] = None
+    updated_at: datetime | None = None
 
     class Settings:
         name = "posts"
