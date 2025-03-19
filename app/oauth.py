@@ -7,8 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from models import User
 from config import ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY, ALGORITHM
 
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login", auto_error=False)
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
@@ -55,3 +54,18 @@ async def verify_token(token: Annotated[str, Depends(oauth2_scheme)]):
             detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+async def verify_token_optional(token: str = Depends(oauth2_scheme)):
+    if not token:
+        return None  
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]) 
+        email: str = payload.get("sub")
+
+        if not email:
+            return None  
+        user = await User.find_one(User.email == email)  
+        return user  
+
+    except (ExpiredSignatureError, InvalidTokenError):
+        return None  

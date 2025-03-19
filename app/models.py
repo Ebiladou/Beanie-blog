@@ -28,10 +28,15 @@ class UserResponse(BaseModel):
     bio: str
 
 class Comment(BaseModel):
-    author: str  
+    id: PydanticObjectId = Field(default_factory=PydanticObjectId)
+    author: str | None = None
     content: str
-    replies: List["Comment"] = Field(default_factory=list)
+    replies: List["Comment"] = []
     created_at: datetime = Field(default_factory=datetime.now)
+
+class UpdateComment(BaseModel):
+    content: str | None = None
+    author_name: str | None = None 
 
 class BlogPost(Document):
     image_url: str | None = None

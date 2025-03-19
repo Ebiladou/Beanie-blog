@@ -48,17 +48,14 @@ async def delete_post(id: PydanticObjectId, logged_user = Depends(verify_token))
     await post.delete()
     return
 
-@router.patch("/{id}", response_model=PostResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.put("/{id}", response_model=PostResponse, status_code=status.HTTP_202_ACCEPTED)
 async def update_post(id:PydanticObjectId, post: PostUpdate, logged_user = Depends(verify_token)):
     userpost = await BlogPost.get(id)
     if not userpost:
         raise HTTPException(status_code=404, detail="post not found")
     if userpost.author != logged_user.username:
         raise HTTPException(status_code=403, detail="cannot update post")
-    
-    update_data = post.model_dump(exclude_unset=True)
-    await userpost.update({"$set": update_data})
+    update_data = {k: v for k, v in post.model_dump(exclude_unset=True).items() if v is not None}
+    await BlogPost.find_one(BlogPost.id == id).update({"$set": update_data})
     updated_post = await BlogPost.get(id)
     return updated_post
-
-   

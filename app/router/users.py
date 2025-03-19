@@ -51,7 +51,7 @@ async def update_user(id: PydanticObjectId, user: UserUpdate, logged_user = Depe
         raise HTTPException(status_code=404, detail="User not found")
     if existing_user.id != logged_user.id:
         raise HTTPException(status_code=403, detail="cannot perform this action")
-    update_data = user.model_dump(exclude_unset=True)
-    await existing_user.update({"$set": update_data})
+    update_data = {k: v for k, v in user.model_dump(exclude_unset=True).items() if v is not None}
+    await User.find_one(User.id == id).update({"$set": update_data})
     updated_user = await User.get(id)
     return updated_user
