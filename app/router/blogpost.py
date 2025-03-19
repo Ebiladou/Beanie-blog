@@ -44,7 +44,7 @@ async def delete_post(id: PydanticObjectId, logged_user = Depends(verify_token))
     if post is None:
         raise HTTPException(status_code=404, detail="post not found")
     if post.author != logged_user.username:
-        raise HTTPException(status_code=403, detail="cannot delete post")
+        raise HTTPException(status_code=403, detail="unauthorized to delete post")
     await post.delete()
     return
 
@@ -54,7 +54,7 @@ async def update_post(id:PydanticObjectId, post: PostUpdate, logged_user = Depen
     if not userpost:
         raise HTTPException(status_code=404, detail="post not found")
     if userpost.author != logged_user.username:
-        raise HTTPException(status_code=403, detail="cannot update post")
+        raise HTTPException(status_code=403, detail="unauthorized to update post")
     update_data = {k: v for k, v in post.model_dump(exclude_unset=True).items() if v is not None}
     await BlogPost.find_one(BlogPost.id == id).update({"$set": update_data})
     updated_post = await BlogPost.get(id)

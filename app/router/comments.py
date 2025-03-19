@@ -8,7 +8,7 @@ router = APIRouter(
     tags=['Comments']
 )
 
-@router.post("/{post_id}/comment")
+@router.post("/{post_id}/comment", status_code=status.HTTP_201_CREATED)
 async def add_comment(post_id: PydanticObjectId, comment: Comment, logged_user=Depends(verify_token_optional)):
     post = await BlogPost.get(post_id)
     if not post:
@@ -21,7 +21,7 @@ async def add_comment(post_id: PydanticObjectId, comment: Comment, logged_user=D
     await post.save()
     return comment
 
-@router.post("/{post_id}/comment/{comment_id}")
+@router.post("/{post_id}/comment/{comment_id}", status_code=status.HTTP_201_CREATED)
 async def reply_to_comment(post_id: PydanticObjectId, comment_id: PydanticObjectId, reply: Comment, logged_user=Depends(verify_token_optional)):
     post = await BlogPost.get(post_id)
     if not post:
@@ -79,7 +79,7 @@ async def delete_comment(post_id: PydanticObjectId, comment_id: PydanticObjectId
     await post.save()
     return
 
-@router.patch("/{post_id}/comment/{comment_id}")
+@router.patch("/{post_id}/comment/{comment_id}", status_code=status.HTTP_202_ACCEPTED)
 async def update_comment(post_id: PydanticObjectId, comment_id: PydanticObjectId, update_data: UpdateComment, author_name: str = Query(None), logged_user=Depends(verify_token_optional),):
     post = await BlogPost.get(post_id)
     if not post:

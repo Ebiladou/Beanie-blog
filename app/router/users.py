@@ -40,7 +40,7 @@ async def delete_user(id: PydanticObjectId, logged_user = Depends(verify_token))
     if not user:
         raise HTTPException(status_code=404, detail="user not found")
     if user.id != logged_user.id:
-        raise HTTPException(status_code=403, detail="cannot perform this action")
+        raise HTTPException(status_code=403, detail="unauthorized to delete user")
     await user.delete()
     return
 
@@ -50,7 +50,7 @@ async def update_user(id: PydanticObjectId, user: UserUpdate, logged_user = Depe
     if not existing_user:
         raise HTTPException(status_code=404, detail="User not found")
     if existing_user.id != logged_user.id:
-        raise HTTPException(status_code=403, detail="cannot perform this action")
+        raise HTTPException(status_code=403, detail="unauthorized to edit user")
     update_data = {k: v for k, v in user.model_dump(exclude_unset=True).items() if v is not None}
     await User.find_one(User.id == id).update({"$set": update_data})
     updated_user = await User.get(id)
