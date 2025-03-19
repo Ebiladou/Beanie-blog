@@ -41,7 +41,8 @@ Before running the application, create a .env file in the root directory and fil
 The application uses MongoDB running locally as its database. Update the init_db function in your database configuration file to reflect your database settings. 
 ``` async def init_db():
     client = AsyncIOMotorClient("mongodb://localhost:27017")  # Update with your database URI if different
-    db = client["blogger"]  # Change database name if you have a different name set up locally ```
+    db = client["blogger"]  # Change database name if you have a different name set up locally 
+```
 
 ## Running the Application
 CD into app and start the application with
