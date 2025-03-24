@@ -1,8 +1,8 @@
 from fastapi import status, HTTPException, APIRouter, Depends
 from beanie import PydanticObjectId
-from models import User, UserResponse, UserUpdate
-from utils import hash_password
-from oauth import verify_token
+from app.models import User
+from app.schemas import UserResponse, UserUpdate
+from app.oauth import verify_token
 
 router = APIRouter(
     prefix="/user",
@@ -17,10 +17,10 @@ async def create_user(user: User):
     existing_username = await User.find_one(User.username == user.username)
     if existing_username:
         raise HTTPException(status_code=400, detail="Username is already taken")
-    user_data = user.model_dump(exclude={"password"})
-    new_user = User(**user_data, password=hash_password(user.password))
+    user_data = user.model_dump()
+    new_user = User(**user_data)
     await new_user.insert()
-    return new_user
+    return new_user 
 
 @router.get("/", response_model=list[UserResponse])
 async def get_users():

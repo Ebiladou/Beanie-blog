@@ -1,7 +1,8 @@
 from fastapi import status, HTTPException, APIRouter, Depends, Query
 from beanie import PydanticObjectId
-from models import BlogPost, Comment, UpdateComment
-from oauth import verify_token_optional
+from app.models import BlogPost, Comment
+from app.schemas import UpdateComment
+from app.oauth import verify_token_optional
 
 router = APIRouter(
     prefix="/post",
@@ -17,6 +18,7 @@ async def add_comment(post_id: PydanticObjectId, comment: Comment, logged_user=D
         comment.author = logged_user.username
     elif not comment.author:  
         raise HTTPException(status_code=400, detail="Author name required")
+    await comment.insert()
     post.comments.append(comment)
     await post.save()
     return comment
@@ -26,22 +28,16 @@ async def reply_to_comment(post_id: PydanticObjectId, comment_id: PydanticObject
     post = await BlogPost.get(post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
-    def find_comment(comments):
-        for comment in comments:
-            if comment.id == comment_id:
-                return comment
-            found = find_comment(comment.replies) 
-            if found:
-                return found
-        return None
-    parent_comment = find_comment(post.comments)
-    if not parent_comment:
+    main_comment = await Comment.get(comment_id)
+    if not main_comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     if logged_user:
         reply.author = logged_user.username  
-    parent_comment.replies.append(reply)
-    await post.save()
-    return reply
+    
+    comment_reply = reply.model_dump()
+    main_comment.replies.append(comment_reply)
+    await main_comment.save()
+    return comment_reply
 
 @router.get("/{post_id}/comments")
 async def get_comments(post_id: PydanticObjectId):
@@ -76,7 +72,7 @@ async def delete_comment(post_id: PydanticObjectId, comment_id: PydanticObjectId
 
     if not find_and_remove_comment(post.comments):
         raise HTTPException(status_code=404, detail="Comment not found")
-    await post.save()
+    await post.update()
     return
 
 @router.patch("/{post_id}/comment/{comment_id}", status_code=status.HTTP_202_ACCEPTED)
@@ -101,5 +97,5 @@ async def update_comment(post_id: PydanticObjectId, comment_id: PydanticObjectId
         comment.content = update_data.content
     else:
         raise HTTPException(status_code=403, detail="Unauthorized to edit this comment")
-    await post.save()
+    await post.update()
     return comment

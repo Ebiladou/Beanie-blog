@@ -1,42 +1,34 @@
 from datetime import datetime
-from beanie import Document
-from pydantic import BaseModel, Field, EmailStr
+from beanie import Document,  before_event, Insert, Link
+from pydantic import Field, EmailStr
 from beanie.odm.fields import Indexed
-from typing import List, Annotated
+from typing import List, Annotated, Optional
+from app.utils import hash_password
 from beanie import PydanticObjectId
 
 class User(Document):
     username: Annotated[str, Indexed(unique=True)] = Field(max_length=50)
     email: EmailStr
     password: str
-    bio: str | None = None
+    bio: str
     created_at: datetime = Field(default_factory=datetime.now)
 
     class Settings:
         name = "users"
 
-class UserUpdate(BaseModel):
-    username: str | None = None
-    email: EmailStr | None = None
-    password: str | None = None
-    bio: str | None = None
+    @before_event(Insert)
+    def hash_userpassword(self):
+        self.password = hash_password(self.password)
 
-class UserResponse(BaseModel):
-    id: PydanticObjectId
-    username: str
-    email: EmailStr
-    bio: str
-
-class Comment(BaseModel):
-    id: PydanticObjectId = Field(default_factory=PydanticObjectId)
+class Comment(Document):
+    #id: PydanticObjectId
     author: str | None = None
     content: str
-    replies: List["Comment"] = []
+    replies: List[Link["Comment"]]= []
     created_at: datetime = Field(default_factory=datetime.now)
 
-class UpdateComment(BaseModel):
-    content: str | None = None
-    author_name: str | None = None 
+    class Settings:
+        name = "comments"
 
 class BlogPost(Document):
     image_url: str | None = None
@@ -44,23 +36,8 @@ class BlogPost(Document):
     content: str
     author: str | None = None
     tags: List[str] = Field(default_factory=list)  
-    comments: List[Comment] = Field(default_factory=list) 
+    comments: List[Link[Comment]] = []
     created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime | None = None
 
     class Settings:
         name = "posts"
-
-class PostUpdate(BaseModel):
-    image_url: str | None = None
-    title: str | None = None
-    content: str | None = None
-    tags: List[str] | None = Field(default_factory=list)  
-    updated_at: datetime = Field(default_factory=datetime.now)
-
-class PostResponse(BaseModel):
-    id: PydanticObjectId
-    title: str
-    content: str
-    author:str
-    created_at: datetime

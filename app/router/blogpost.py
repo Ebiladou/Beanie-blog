@@ -1,9 +1,10 @@
 from fastapi import status, HTTPException, APIRouter, UploadFile, Depends, Body
 from beanie import PydanticObjectId
-from models import BlogPost, PostResponse, PostUpdate
+from app.models import BlogPost
+from app.schemas import PostResponse, PostUpdate
 from typing import List
 import cloudinary.uploader
-from oauth import verify_token
+from app.oauth import verify_token
 
 router = APIRouter(
     prefix="/post",
@@ -27,21 +28,21 @@ async def create_blogpost(blog_post: BlogPost, logged_user = Depends(verify_toke
 @router.get("/", response_model=list[PostResponse])
 async def get_posts():
     posts = await BlogPost.find().to_list()
-    if posts is None:
+    if not posts:
         raise HTTPException(status_code=400, detail="no posts available")
     return posts
 
 @router.get("/{id}", response_model=PostResponse)
 async def get_post (id: PydanticObjectId) -> BlogPost:
     post = await BlogPost.get(id)
-    if post is None:
+    if not post:
         raise HTTPException(status_code=404, detail="post not found")
     return post
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(id: PydanticObjectId, logged_user = Depends(verify_token)):
     post = await BlogPost.get(id)
-    if post is None:
+    if not post:
         raise HTTPException(status_code=404, detail="post not found")
     if post.author != logged_user.username:
         raise HTTPException(status_code=403, detail="unauthorized to delete post")
